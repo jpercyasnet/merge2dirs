@@ -1,9 +1,5 @@
 use iced::widget::{button, column, row, text_input, text, scrollable, checkbox, Space};
-use iced::{Alignment, Element, Task, Length, Color, Theme, Size};
-
-use iced::event::{self, Event};
-use iced::Subscription;
-use iced::window;
+use iced::{Alignment, Element, Task, Length, Color, Theme};
 
 use std::process::Command as stdCommand;
 use std::path::Path;
@@ -29,17 +25,16 @@ pub fn main() -> iced::Result {
 
      let mut widthxx: f32 = 1350.0;
      let mut heightxx: f32 = 750.0;
-     let (errcode, _errstring, widtho, heighto) = get_winsize();
+     let (errcode, errstring, widtho, heighto) = get_winsize();
      if errcode == 0 {
          widthxx = widtho as f32 - 20.0;
          heightxx = heighto as f32 - 75.0;
-//         println!("{}", errstring);
-//     } else {
-//         println!("**ERROR {} get_winsize: {}", errcode, errstring);
+         println!("{}", errstring);
+     } else {
+         println!("**ERROR {} get_winsize: {}", errcode, errstring);
      }
      iced::application(Convert2dirs::title, Convert2dirs::update, Convert2dirs::view)
         .window_size((widthxx, heightxx))
-        .subscription(Convert2dirs::subscription)
         .theme(Convert2dirs::theme)
         .run_with(Convert2dirs::new)
  }
@@ -76,25 +71,23 @@ enum Message {
     CopyxFound(Result<Copyx, Error>),
     DIN1(bool),
     DIN2(bool),
-    Size(Size),
 }
 
 impl Convert2dirs {
     fn new() -> (Self, Task<Message>) {
-        let mut heightxx: f32 = 230.0;
+        let mut heightxx: f32 = 170.0;
         let mut widthxx: f32 = 500.0;
         let (errcode, errstring, widtho, heighto) = get_winsize();
-        let for_message: String;
         if errcode == 0 {
-            heightxx = 230.0 + ((heighto as f32 - 768.0) / 2.0);
+            heightxx = 170.0 + ((heighto as f32 - 768.0) / 2.0);
             widthxx = 650.0 + ((widtho as f32 - 1366.0) / 2.0);
-            for_message = format!("{}", errstring);
+            println!("{}", errstring);
         } else {
-            for_message = format!("**ERROR {} get_winsize: {}", errcode, errstring);
+         println!("**ERROR {} get_winsize: {}", errcode, errstring);
         }
-        ( Self { msg_value: for_message.to_string(), dir1_value: "no directory".to_string(), hhmmss1_value: "-00:00:00:00:00:00".to_string(),
+        ( Self { msg_value: "no message".to_string(), dir1_value: "no directory".to_string(), hhmmss1_value: "-00:00:00:00:00:00".to_string(),
                dir2_value: "no directory".to_string(), hhmmss2_value: "-00:00:00:00:00:00".to_string(), din1_bool: false, din2_bool: false,
-               size_value: "10".to_string(), mess_color: Color::from([0.5, 0.5, 1.0]), outdir_value: "no directory".to_string(), 
+               size_value: "10".to_string(), mess_color: Color::from([0.0, 0.0, 1.0]), outdir_value: "no directory".to_string(), 
                scrol1_value: " No directory selected \n \
                             ".to_string(),
                scrol2_value: " No directory selected \n \
@@ -190,74 +183,20 @@ impl Convert2dirs {
             }
             Message::DIN1(picked) => {self.din1_bool = picked; Task::none()}
             Message::DIN2(picked) => {self.din2_bool = picked; Task::none()}
-            Message::Size(size) => {
-               self.scrolheight = 230.0 + ((size.height as f32 - 768.0) / 2.0);
-               self.screenwidth = 650.0 + ((size.width as f32 - 1366.0) / 2.0);
-               Task::none()
-            }
 
         }
     }
 
     fn view(&self) -> Element<Message> {
-        let dirspace = 10.0;
-//        if &self.dir1_value.len()*8 < 700 {
-//            dirspace = 700.0 - 8.0*self.dir1_value.len() as f32;
-//        }
-/*        let mut dirsinfo = Column::new().spacing(10);
-        dirsinfo = dirsinfo.push(column![row![button("Dir 1 Button").on_press(Message::Dir1Pressed),
-                                    text(&self.dir1_value).size(20),],
-                               scrollable(
-                                          column![
-                                            text(format!("{}",&self.scrol1_value))
-                                                  ].width(Length::Fixed(self.screenwidth)),
-                                          ).height(Length::Fixed(self.scrolheight)),
-                               checkbox("Date in Filename 1", self.din1_bool).on_toggle(Message::DIN1,).width(Length::Fill),
-                               row![text("date mod value 1(-YY:MM:DD:hh:mm:ss): ").size(20),
-                                    text_input("No input....", &self.hhmmss1_value)
-                                          .on_input(Message::Hhmmss1Changed).padding(10).size(20),],].width(Length::Fill));  
-*/
-
+        let mut dirspace = 5.0;
+        if &self.dir1_value.len()*8 < 700 {
+            dirspace = 700.0 - 8.0*self.dir1_value.len() as f32;
+        }
         column![
             row![text("Message:").size(20),
-                 text(&self.msg_value).color(*&self.mess_color).size(20),
+                 text(&self.msg_value).size(20),
             ].align_y(Alignment::Center).spacing(10).padding(10),
-            row![column![row![button("Dir 1 Button").on_press(Message::Dir1Pressed),
-                                    text(&self.dir1_value).size(20),
-                             ],
-                         scrollable(
-                                    column![
-                                            text(format!("{}",&self.scrol1_value))
-                                           ].width(Length::Fixed(self.screenwidth)),
-                                    ).height(Length::Fixed(self.scrolheight)),
-                         checkbox("Date in Filename 1", self.din1_bool).on_toggle(Message::DIN1,).width(Length::Fill),
-                         row![text("date mod value 1(-YY:MM:DD:hh:mm:ss): ").size(20),
-                                    text_input("No input....", &self.hhmmss1_value)
-                                          .on_input(Message::Hhmmss1Changed).padding(10).size(20),
-                             ],
-                         ].width(Length::Fill),
-                 Space::with_width(dirspace),
-                 column![row![button("Dir 2 Button").on_press(Message::Dir2Pressed),
-                                    text(&self.dir2_value).size(20),
-                             ],
-                         scrollable(
-                                    column![
-                                            text(format!("{}",&self.scrol2_value))
-                                           ].width(Length::Fixed(self.screenwidth)),
-                                    ).height(Length::Fixed(self.scrolheight)),
-                         checkbox("Date in Filename 2", self.din2_bool).on_toggle(Message::DIN2,).width(Length::Fill),
-                         row![text("date mod value 1(-YY:MM:DD:hh:mm:ss): ").size(20),
-                                    text_input("No input....", &self.hhmmss2_value)
-                                          .on_input(Message::Hhmmss2Changed).padding(10).size(20),
-                             ],
-                         ].width(Length::Fill),
-            ].align_y(Alignment::Center).spacing(10).padding(10),
-
-
-
-
-
-/*            row![button("Dir 1 Button").on_press(Message::Dir1Pressed),
+            row![button("Dir 1 Button").on_press(Message::Dir1Pressed),
                  text(&self.dir1_value).size(20),
                  Space::with_width(dirspace),
                  button("Dir 2 Button").on_press(Message::Dir2Pressed),
@@ -284,9 +223,6 @@ impl Convert2dirs {
                  text_input("No input....", &self.hhmmss2_value)
                             .on_input(Message::Hhmmss2Changed).padding(10).size(20),
             ].align_y(Alignment::Center).spacing(10).padding(10),
-*/
-
-
             row![text("     Length of File Description: "),
                  text_input("No input....", &self.size_value).on_input(Message::SizeChanged).padding(5).size(15).width(Length::Fixed(50.0)),
               button("outDirectory Button").on_press(Message::OutDirPressed),
@@ -309,16 +245,6 @@ impl Convert2dirs {
     fn theme(&self) -> Theme {
         self.theme.clone()
     }
-
-    fn subscription(&self) -> Subscription<Message> {
-        event::listen_with(|event, _status, _window| match event {
-            Event::Window(window::Event::Resized(size)) => {
-                Some(Message::Size(size))
-            }
-            _ => None,
-        })
-    }
-
 
 }
 #[derive(Debug, Clone)]
